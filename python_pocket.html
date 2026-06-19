@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Питон в кармане">
+<meta name="theme-color" content="#1b1714">
+<title>Питон в кармане</title>
+<style>
+  :root{
+    --bg:#1b1714;--surface:#242019;--surface-2:#2c2720;--line:#3a332a;
+    --text:#f1e9da;--muted:#9b917f;--amber:#f0a830;--amber-soft:#f6c067;
+    --green:#84c98b;--green-bg:rgba(132,201,139,.12);--coral:#e8806a;--coral-bg:rgba(232,128,106,.12);
+    --ui:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);color:var(--text);font-family:var(--ui);font-size:16px;
+    line-height:1.45;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  header{
+    position:sticky;top:0;z-index:30;background:rgba(27,23,20,.88);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line);
+    padding:calc(env(safe-area-inset-top) + 12px) 16px 12px;
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;}
+  .glyph{font-family:var(--mono);font-weight:700;color:var(--amber);font-size:18px;letter-spacing:-1px;
+    background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:4px 8px;line-height:1;}
+  .brand h1{font-size:16px;font-weight:600;margin:0;letter-spacing:.2px;}
+  .status{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex:none;}
+  .dot.ready{background:var(--green);box-shadow:0 0 0 3px rgba(132,201,139,.16);}
+  .dot.loading{background:var(--amber);animation:pulse 1.1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+
+  .tabs{display:flex;gap:6px;padding:12px 16px 0;}
+  .tab{flex:1;text-align:center;padding:10px 8px;border-radius:11px;background:transparent;
+    border:1px solid transparent;color:var(--muted);font-size:14.5px;font-weight:600;
+    font-family:var(--ui);cursor:pointer;transition:color .15s,background .15s,border-color .15s;}
+  .tab.active{background:var(--surface);border-color:var(--line);color:var(--text);}
+
+  main{flex:1;padding:14px 16px 8px;}
+
+  .ex-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px;}
+  .ex-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;}
+  .ex-week{font-family:var(--mono);font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--amber);
+    background:rgba(240,168,48,.1);border:1px solid rgba(240,168,48,.25);border-radius:6px;padding:3px 7px;}
+  .ex-nav{display:flex;gap:6px;align-items:center;}
+  .ex-nav button{width:34px;height:34px;border-radius:9px;background:var(--surface-2);border:1px solid var(--line);
+    color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .ex-nav button:disabled{opacity:.35;}
+  .ex-counter{font-size:13px;color:var(--muted);font-family:var(--mono);min-width:38px;text-align:center;}
+  .ex-title{font-size:17px;font-weight:650;margin:2px 0 6px;display:flex;align-items:center;gap:8px;}
+  .done-badge{font-size:12px;color:var(--green);background:var(--green-bg);border:1px solid rgba(132,201,139,.3);
+    border-radius:6px;padding:2px 7px;font-weight:600;}
+  .ex-task{font-size:15px;color:var(--text);}
+  .ex-task code,.ex-extras code{font-family:var(--mono);font-size:13.5px;background:var(--surface-2);
+    padding:1px 5px;border-radius:5px;border:1px solid var(--line);}
+  .ex-extras{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;}
+  .pill{font-size:13px;font-weight:600;padding:7px 12px;border-radius:9px;background:var(--surface-2);
+    border:1px solid var(--line);color:var(--amber-soft);cursor:pointer;font-family:var(--ui);}
+  .reveal{margin-top:12px;padding:12px;border-radius:11px;background:var(--surface-2);border:1px solid var(--line);font-size:14px;}
+  .reveal h4{margin:0 0 6px;font-size:12px;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);}
+  .reveal pre{margin:0;font-family:var(--mono);font-size:13px;white-space:pre-wrap;color:var(--amber-soft);line-height:1.5;}
+  .hidden{display:none;}
+
+  .editor-label{font-size:12px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);
+    margin:0 2px 7px;display:flex;justify-content:space-between;}
+  .editor-wrap{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+  textarea#code{width:100%;min-height:200px;resize:vertical;display:block;background:transparent;color:var(--text);
+    border:none;outline:none;font-family:var(--mono);font-size:14.5px;line-height:1.6;padding:14px;
+    tab-size:4;-webkit-tab-size:4;caret-color:var(--amber);}
+  textarea#code::placeholder{color:#6a6258;}
+
+  .run-row{display:flex;gap:8px;margin-top:12px;}
+  .btn-run{flex:1;background:var(--amber);color:#241a06;border:none;border-radius:12px;padding:15px;
+    font-size:16px;font-weight:700;font-family:var(--ui);cursor:pointer;display:flex;align-items:center;
+    justify-content:center;gap:8px;transition:transform .08s,opacity .15s;}
+  .btn-run:active{transform:scale(.985);}
+  .btn-run:disabled{opacity:.55;}
+  .btn-check{flex:1;background:var(--surface);border:1px solid var(--amber);color:var(--amber);
+    border-radius:12px;padding:15px;font-size:15px;font-weight:700;font-family:var(--ui);cursor:pointer;}
+  .btn-check:disabled{opacity:.55;}
+  .btn-clear{background:var(--surface);border:1px solid var(--line);color:var(--muted);border-radius:12px;
+    padding:15px 16px;font-size:15px;font-weight:600;font-family:var(--ui);cursor:pointer;}
+
+  .banner{margin-top:12px;padding:13px 14px;border-radius:12px;font-size:14.5px;font-weight:600;display:none;
+    align-items:flex-start;gap:9px;line-height:1.4;}
+  .banner.ok{display:flex;background:var(--green-bg);border:1px solid rgba(132,201,139,.35);color:var(--green);}
+  .banner.no{display:flex;background:var(--coral-bg);border:1px solid rgba(232,128,106,.35);color:var(--coral);}
+  .banner .ic{font-size:17px;line-height:1.3;flex:none;}
+
+  .out-label{font-size:12px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin:18px 2px 7px;}
+  #output{background:#15110e;border:1px solid var(--line);border-radius:14px;padding:14px;font-family:var(--mono);
+    font-size:13.5px;line-height:1.6;min-height:64px;white-space:pre-wrap;word-break:break-word;color:#d8cfbe;}
+  #output .err{color:var(--coral);}
+  #output .empty{color:#5f584d;font-style:italic;}
+
+  .symbar{position:sticky;bottom:0;z-index:25;background:rgba(27,23,20,.94);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);
+    padding:8px 10px calc(env(safe-area-inset-bottom) + 8px);display:flex;gap:6px;overflow-x:auto;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none;}
+  .symbar::-webkit-scrollbar{display:none;}
+  .sym{flex:none;min-width:38px;height:38px;padding:0 11px;border-radius:9px;background:var(--surface-2);
+    border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:15px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;}
+  .sym:active{background:var(--line);}
+  .sym.key{color:var(--amber-soft);font-family:var(--ui);font-size:13px;font-weight:600;}
+  .loader-note{text-align:center;color:var(--muted);font-size:13px;padding:6px 0 0;}
+
+  .progress-wrap{padding:8px 16px 0;text-align:center;font-size:12.5px;color:var(--muted);}
+  .progress-wrap b{color:var(--amber-soft);}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand"><span class="glyph">&gt;_</span><h1>Питон в кармане</h1></div>
+  <div class="status"><span class="dot loading" id="dot"></span><span id="statusText">Загружаю Python…</span></div>
+</header>
+
+<div class="progress-wrap" id="progressWrap">Решено <b id="progressCount">0</b> из <b id="progressTotal">20</b> заданий</div>
+
+<div class="tabs">
+  <button class="tab active" id="tabSandbox" onclick="switchTab('sandbox')">Песочница</button>
+  <button class="tab" id="tabPractice" onclick="switchTab('practice')">Практика</button>
+</div>
+
+<main>
+  <div class="ex-card hidden" id="exCard">
+    <div class="ex-top">
+      <span class="ex-week" id="exWeek">Неделя 1</span>
+      <div class="ex-nav">
+        <button id="exPrev" onclick="changeEx(-1)">‹</button>
+        <span class="ex-counter" id="exCounter">1/20</span>
+        <button id="exNext" onclick="changeEx(1)">›</button>
+      </div>
+    </div>
+    <div class="ex-title"><span id="exTitle"></span><span class="done-badge hidden" id="doneBadge">✓ решено</span></div>
+    <div class="ex-task" id="exTask"></div>
+    <div class="ex-extras">
+      <button class="pill" onclick="toggle('hintBox')">💡 Подсказка</button>
+      <button class="pill" onclick="toggle('solBox')">👀 Решение</button>
+    </div>
+    <div class="reveal hidden" id="hintBox"><h4>Подсказка</h4><div id="exHint"></div></div>
+    <div class="reveal hidden" id="solBox"><h4>Один из вариантов решения</h4><pre id="exSol"></pre></div>
+  </div>
+
+  <div class="editor-label"><span>Твой код</span><span id="editorHint"></span></div>
+  <div class="editor-wrap">
+    <textarea id="code" spellcheck="false" autocapitalize="off" autocorrect="off" autocomplete="off"
+      placeholder="# пиши здесь&#10;print('Привет!')"></textarea>
+  </div>
+
+  <div class="run-row">
+    <button class="btn-run" id="runBtn" onclick="runCode()" disabled>▶ Запустить</button>
+    <button class="btn-check hidden" id="checkBtn" onclick="checkCode()" disabled>✓ Проверить</button>
+    <button class="btn-clear" onclick="clearCode()">Стереть</button>
+  </div>
+
+  <div class="banner" id="banner"><span class="ic" id="bannerIc"></span><span id="bannerText"></span></div>
+
+  <div class="out-label">Результат</div>
+  <div id="output"><span class="empty">Здесь появится то, что выведет твой код.</span></div>
+  <div class="loader-note" id="loaderNote">Python загружается один раз (~10–15 сек). Дальше будет быстро.</div>
+</main>
+
+<div class="symbar" id="symbar">
+  <button class="sym key" onclick="insertText('    ')">⇥ отступ</button>
+  <button class="sym" onclick="wrap('(',')')">(&nbsp;)</button>
+  <button class="sym" onclick="wrap('[',']')">[&nbsp;]</button>
+  <button class="sym" onclick="wrap('{','}')">{&nbsp;}</button>
+  <button class="sym" onclick="insertText(':')">:</button>
+  <button class="sym" onclick="wrap('\'','\'')">'&nbsp;'</button>
+  <button class="sym" onclick="wrap('&quot;','&quot;')">"&nbsp;"</button>
+  <button class="sym" onclick="insertText('=')">=</button>
+  <button class="sym" onclick="insertText('==')">==</button>
+  <button class="sym" onclick="insertText(',')">,</button>
+  <button class="sym" onclick="insertText('.')">.</button>
+  <button class="sym" onclick="insertText('_')">_</button>
+  <button class="sym" onclick="insertText('#')">#</button>
+  <button class="sym" onclick="insertText('+')">+</button>
+  <button class="sym" onclick="insertText('-')">−</button>
+  <button class="sym" onclick="insertText('*')">*</button>
+  <button class="sym" onclick="insertText('%')">%</button>
+  <button class="sym" onclick="insertText('&lt;')">&lt;</button>
+  <button class="sym" onclick="insertText('&gt;')">&gt;</button>
+  <button class="sym key" onclick="insertText('print()',6)">print()</button>
+  <button class="sym key" onclick="insertText('input()',6)">input()</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pyodide/0.28.3/pyodide.js"></script>
+<script>
+let pyodide=null, currentTab='sandbox', exIndex=0;
+const ta=document.getElementById('code');
+
+/* ---- check helpers ---- */
+function _lines(o){return o.split('\n').map(s=>s.trim()).filter(s=>s.length);}
+function _nums(o){return _lines(o).filter(s=>/^-?\d+$/.test(s)).map(Number);}
+function _last(o){const l=_lines(o);return l.length?l[l.length-1].toLowerCase():'';}
+function _has(o,t){return o.toLowerCase().includes(t.toLowerCase());}
+function _ns(o){return o.toLowerCase().replace(/\s/g,'');}
+function _eq(a,b){return a.length===b.length&&a.every((x,i)=>x===b[i]);}
+
+const exercises=[
+ {week:"Неделя 1",title:"Привет, мир",task:"Выведи на экран три строки про себя: имя, город и чем занимаешься. По одной строке.",
+  hint:"Используй три отдельных вызова print(). В кавычках — любой текст.",
+  sol:"print('Меня зовут Мила')\nprint('Город: Уфа')\nprint('Занимаюсь автоматизацией')",
+  tests:[{stdin:[],ok:o=>_lines(o).length>=3}],fail:"Нужно вывести минимум три строки — три отдельных print()."},
+
+ {week:"Неделя 1",title:"Рамка вокруг имени",task:"Выведи своё имя, окружённое звёздочками сверху, снизу и по бокам — как рамкой.",
+  hint:"Три строки print(): первая и третья — звёздочки, средняя — *Имя*.",
+  sol:"print('******')\nprint('*Mila*')\nprint('******')",
+  tests:[{stdin:[],ok:o=>{const L=_lines(o);return L.length>=3&&/^\*+$/.test(L[0])&&L[0]===L[2]&&/^\*.*\*$/.test(L[1]);}}],
+  fail:"Нужны три строки: звёздочки сверху и снизу, имя в звёздочках посередине."},
+
+ {week:"Неделя 1",title:"Через 10 лет",task:"Создай переменную age со своим возрастом. Выведи: «Через 10 лет мне будет X», где X посчитан программой.",
+  hint:"X = age + 10. Собери строку через f-строку: f'... {age + 10}'.",
+  sol:"age = 28\nprint(f'Через 10 лет мне будет {age + 10}')",
+  tests:[{stdin:[],ok:o=>_has(o,'через 10 лет')&&/\d/.test(o)}],
+  fail:"Выведи фразу «Через 10 лет мне будет …» с посчитанным числом (age + 10)."},
+
+ {week:"Неделя 1",title:"Поздороваться",task:"Спроси у пользователя имя через input() и поздоровайся с ним по имени.",
+  hint:"name = input('Как тебя зовут? '). Потом print с f-строкой.",
+  sol:"name = input('Как тебя зовут? ')\nprint(f'Привет, {name}!')",
+  tests:[{stdin:['Тест'],ok:o=>_has(o,'привет')&&_has(o,'тест')}],
+  fail:"Поздоровайся с введённым именем — используй f-строку с {name}."},
+
+ {week:"Неделя 1",title:"Калькулятор суммы",task:"Спроси два числа и выведи их сумму. Помни: input() даёт строку, число получаем через int().",
+  hint:"a = int(input('Первое: ')). Так же второе. Потом print(a + b).",
+  sol:"a = int(input('Первое число: '))\nb = int(input('Второе число: '))\nprint(f'Сумма: {a + b}')",
+  tests:[{stdin:['2','3'],ok:o=>/(^|\D)5(\D|$)/.test(o)},{stdin:['10','15'],ok:o=>/(^|\D)25(\D|$)/.test(o)}],
+  fail:"Сумма должна считаться правильно (2+3=5). Не забудь обернуть input() в int()."},
+
+ {week:"Неделя 1",title:"БОЛЬШИМИ буквами",task:"Спроси у пользователя любой текст и выведи его заглавными буквами.",
+  hint:"У строк есть метод .upper().",
+  sol:"text = input('Введи текст: ')\nprint(text.upper())",
+  tests:[{stdin:['привет'],ok:o=>o.includes('ПРИВЕТ')}],
+  fail:"Текст нужно вывести заглавными буквами — метод .upper()."},
+
+ {week:"Неделя 2",title:"Чётное или нечётное",task:"Спроси число и выведи «Чётное», если оно делится на 2 без остатка, иначе «Нечётное».",
+  hint:"Остаток от деления — это %. Если число % 2 == 0 — чётное.",
+  sol:"n = int(input('Число: '))\nif n % 2 == 0:\n    print('Чётное')\nelse:\n    print('Нечётное')",
+  tests:[{stdin:['4'],ok:o=>_last(o)==='чётное'},{stdin:['7'],ok:o=>_last(o)==='нечётное'}],
+  fail:"Для 4 должно быть «Чётное», для 7 — «Нечётное». Проверяй n % 2 == 0."},
+
+ {week:"Неделя 2",title:"Взрослый или нет",task:"Спроси возраст. Выведи «Взрослый», если 18 или больше, иначе «Несовершеннолетний».",
+  hint:"Сравнение: age >= 18. Не забудь про отступ внутри if.",
+  sol:"age = int(input('Возраст: '))\nif age >= 18:\n    print('Взрослый')\nelse:\n    print('Несовершеннолетний')",
+  tests:[{stdin:['20'],ok:o=>_last(o)==='взрослый'},{stdin:['15'],ok:o=>_last(o)==='несовершеннолетний'}],
+  fail:"Для 20 — «Взрослый», для 15 — «Несовершеннолетний». Сравнивай age >= 18."},
+
+ {week:"Неделя 2",title:"Числа от 1 до 10",task:"Выведи числа от 1 до 10, каждое с новой строки, с помощью цикла while.",
+  hint:"i = 1. Пока i <= 10: выводи i и увеличивай i на 1 (i = i + 1).",
+  sol:"i = 1\nwhile i <= 10:\n    print(i)\n    i = i + 1",
+  tests:[{stdin:[],ok:o=>_eq(_nums(o),[1,2,3,4,5,6,7,8,9,10])}],
+  fail:"Нужно вывести числа от 1 до 10, каждое с новой строки. Не забудь увеличивать i."},
+
+ {week:"Неделя 2",title:"Обратный отсчёт",task:"Выведи числа от 5 до 1 (по убыванию), а затем строку «Поехали!».",
+  hint:"range(5, 0, -1) идёт по убыванию. После цикла — отдельный print.",
+  sol:"for i in range(5, 0, -1):\n    print(i)\nprint('Поехали!')",
+  tests:[{stdin:[],ok:o=>_eq(_nums(o),[5,4,3,2,1])&&_has(o,'поехали')}],
+  fail:"Сначала 5,4,3,2,1 (каждое с новой строки), потом «Поехали!»."},
+
+ {week:"Неделя 2",title:"Таблица умножения на 7",task:"Выведи таблицу умножения на 7: от 7×1 до 7×10. Каждая строка вида «7 x 3 = 21».",
+  hint:"for i in range(1, 11): выводи f'7 x {i} = {7 * i}'.",
+  sol:"for i in range(1, 11):\n    print(f'7 x {i} = {7 * i}')",
+  tests:[{stdin:[],ok:o=>{const s=_ns(o);return s.includes('7x1=7')&&s.includes('7x5=35')&&s.includes('7x10=70');}}],
+  fail:"Каждая строка вида «7 x 3 = 21», от 7×1 до 7×10. Используй f-строку."},
+
+ {week:"Неделя 2",title:"Звёздная пирамида",task:"Выведи 4 строки: одна звёздочка, две, три, четыре — лесенкой.",
+  hint:"Строку можно умножать на число: '*' * 3 даёт '***'. Перебери range(1, 5).",
+  sol:"for i in range(1, 5):\n    print('*' * i)",
+  tests:[{stdin:[],ok:o=>_eq(_lines(o),['*','**','***','****'])}],
+  fail:"Нужны четыре строки: *, **, ***, ****. Подсказка: '*' * i."},
+
+ {week:"Неделя 2",title:"Сумма чётных",task:"Посчитай сумму всех чётных чисел от 1 до 20 включительно и выведи результат.",
+  hint:"total = 0. Перебирай range(1, 21), бери только где i % 2 == 0, прибавляй к total.",
+  sol:"total = 0\nfor i in range(1, 21):\n    if i % 2 == 0:\n        total = total + i\nprint(total)",
+  tests:[{stdin:[],ok:o=>/(^|\D)110(\D|$)/.test(o)}],
+  fail:"Сумма чётных чисел от 1 до 20 равна 110."},
+
+ {week:"Неделя 2",title:"Сумма до 100",task:"Посчитай и выведи сумму всех чисел от 1 до 100 с помощью цикла for.",
+  hint:"total = 0. В for i in range(1, 101): прибавляй i к total.",
+  sol:"total = 0\nfor i in range(1, 101):\n    total = total + i\nprint(total)",
+  tests:[{stdin:[],ok:o=>_has(o,'5050')}],
+  fail:"Сумма чисел от 1 до 100 равна 5050."},
+
+ {week:"Неделя 2",title:"Считаем букву «а»",task:"Спроси у пользователя слово и посчитай, сколько в нём маленьких букв «а». Выведи число.",
+  hint:"count = 0. Перебери символы: for ch in word. Если ch == 'а', увеличь count.",
+  sol:"word = input('Слово: ')\ncount = 0\nfor ch in word:\n    if ch == 'а':\n        count = count + 1\nprint(count)",
+  tests:[{stdin:['карандаш'],ok:o=>_last(o)==='3'},{stdin:['банан'],ok:o=>_last(o)==='2'}],
+  fail:"Посчитай, сколько раз встречается буква «а». В «карандаш» их 3, в «банан» — 2."},
+
+ {week:"Неделя 2",title:"Максимум в списке",task:"Дан список numbers = [3, 9, 1, 7, 4]. Найди и выведи самое большое число, используя цикл (без max()).",
+  hint:"biggest = numbers[0]. Перебери список; если число больше biggest — запиши его в biggest.",
+  sol:"numbers = [3, 9, 1, 7, 4]\nbiggest = numbers[0]\nfor n in numbers:\n    if n > biggest:\n        biggest = n\nprint(biggest)",
+  tests:[{stdin:[],ok:o=>_last(o)==='9'}],
+  fail:"Самое большое число — 9. Сравнивай каждое число с текущим максимумом."},
+
+ {week:"Неделя 3",title:"Список покупок",task:"Создай пустой список. Добавь в него 3 покупки. Выведи весь список и его длину.",
+  hint:"items = []. Потом items.append('хлеб'). Длина — len(items).",
+  sol:"items = []\nitems.append('хлеб')\nitems.append('молоко')\nitems.append('кофе')\nprint(items)\nprint(f'Всего покупок: {len(items)}')",
+  tests:[{stdin:[],ok:o=>/\[[^\]]*,[^\]]*,[^\]]*\]/.test(o)&&/(^|\D)3(\D|$)/.test(o)}],
+  fail:"Добавь 3 покупки в список, выведи список и его длину (3)."},
+
+ {week:"Неделя 3",title:"Карточка человека",task:"Создай словарь с ключами name, age, city. Выведи каждое значение по ключу.",
+  hint:"person = {'name': 'Мила', 'age': 28, 'city': 'Уфа'}. Доступ: person['name'].",
+  sol:"person = {'name': 'Мила', 'age': 28, 'city': 'Уфа'}\nprint(person['name'])\nprint(person['age'])\nprint(person['city'])",
+  tests:[{stdin:[],ok:o=>_lines(o).length>=3}],
+  fail:"Выведи три значения словаря по ключам (имя, возраст, город) — три строки."},
+
+ {week:"Неделя 3",title:"Функция квадрата",task:"Напиши функцию square(n), которая возвращает квадрат числа.",
+  hint:"def square(n): return n * n. Проверять буду сам — просто опиши функцию.",
+  sol:"def square(n):\n    return n * n",
+  harness:"\nprint('@@', square(4), square(7))",
+  tests:[{stdin:[],ok:o=>/@@\s*16\s+49/.test(o)}],
+  fail:"Функция square(n) должна возвращать n умноженное на само себя: square(4) → 16."},
+
+ {week:"Неделя 3",title:"Среднее значение",task:"Напиши функцию average(numbers), которая принимает список чисел и возвращает их среднее.",
+  hint:"Среднее = сумма / количество. В Python есть sum(numbers) и len(numbers).",
+  sol:"def average(numbers):\n    return sum(numbers) / len(numbers)",
+  harness:"\nprint('@@', average([2, 4, 6]))",
+  tests:[{stdin:[],ok:o=>/@@\s*4(\.0+)?\b/.test(o)}],
+  fail:"average([2, 4, 6]) должно быть 4.0. Среднее = sum(numbers) / len(numbers)."},
+];
+
+/* ---- storage ---- */
+async function saveData(k,v){try{localStorage.setItem('pp_'+k,JSON.stringify(v));}catch(e){}}
+async function loadData(k){try{const r=localStorage.getItem('pp_'+k);return r!==null?JSON.parse(r):null;}catch(e){}return null;}
+
+/* ---- progress counter ---- */
+async function updateProgress(){
+  let solved=0;
+  for(let i=0;i<exercises.length;i++){if(await loadData('done_'+i))solved++;}
+  document.getElementById('progressCount').textContent=solved;
+  document.getElementById('progressTotal').textContent=exercises.length;
+}
+
+/* ---- editor ---- */
+function insertText(t,c){const s=ta.selectionStart,e=ta.selectionEnd;ta.value=ta.value.slice(0,s)+t+ta.value.slice(e);
+  const p=c!==undefined?s+c:s+t.length;ta.selectionStart=ta.selectionEnd=p;ta.focus();persistCode();}
+function wrap(o,c){const s=ta.selectionStart,e=ta.selectionEnd,sel=ta.value.slice(s,e);
+  ta.value=ta.value.slice(0,s)+o+sel+c+ta.value.slice(e);ta.selectionStart=ta.selectionEnd=s+o.length+sel.length;ta.focus();persistCode();}
+ta.addEventListener('keydown',function(ev){
+  if(ev.key==='Tab'){ev.preventDefault();insertText('    ');}
+  else if(ev.key==='Enter'){ev.preventDefault();const s=ta.selectionStart,before=ta.value.slice(0,s);
+    const line=before.slice(before.lastIndexOf('\n')+1);let ind=(line.match(/^\s*/)||[''])[0];
+    if(line.trim().endsWith(':'))ind+='    ';insertText('\n'+ind);}
+});
+let pt;function persistCode(){clearTimeout(pt);pt=setTimeout(()=>{
+  if(currentTab==='sandbox')saveData('sandbox_code',ta.value);else saveData('ex_code_'+exIndex,ta.value);},400);}
+ta.addEventListener('input',persistCode);
+
+/* ---- tabs / exercises ---- */
+async function switchTab(tab){
+  currentTab=tab;
+  document.getElementById('tabSandbox').classList.toggle('active',tab==='sandbox');
+  document.getElementById('tabPractice').classList.toggle('active',tab==='practice');
+  document.getElementById('exCard').classList.toggle('hidden',tab!=='practice');
+  document.getElementById('checkBtn').classList.toggle('hidden',tab!=='practice');
+  document.getElementById('editorHint').textContent='';
+  hideBanner();
+  if(tab==='sandbox'){const s=await loadData('sandbox_code');ta.value=s!==null?s:"print('Привет!')";}
+  else await loadEx();
+  clearOutput();
+}
+async function loadEx(){
+  const ex=exercises[exIndex];
+  document.getElementById('exWeek').textContent=ex.week;
+  document.getElementById('exTitle').textContent=ex.title;
+  document.getElementById('exTask').textContent=ex.task;
+  document.getElementById('exHint').textContent=ex.hint;
+  document.getElementById('exSol').textContent=ex.sol;
+  document.getElementById('exCounter').textContent=(exIndex+1)+'/'+exercises.length;
+  document.getElementById('exPrev').disabled=exIndex===0;
+  document.getElementById('exNext').disabled=exIndex===exercises.length-1;
+  document.getElementById('hintBox').classList.add('hidden');
+  document.getElementById('solBox').classList.add('hidden');
+  document.getElementById('editorHint').textContent='задание '+(exIndex+1);
+  const done=await loadData('done_'+exIndex);
+  document.getElementById('doneBadge').classList.toggle('hidden',!done);
+  const s=await loadData('ex_code_'+exIndex);ta.value=s!==null?s:'# реши задание здесь\n';
+  saveData('last_ex',exIndex);
+}
+async function changeEx(d){const n=exIndex+d;if(n<0||n>=exercises.length)return;exIndex=n;await loadEx();clearOutput();hideBanner();window.scrollTo({top:0,behavior:'smooth'});}
+function toggle(id){document.getElementById(id).classList.toggle('hidden');}
+
+/* ---- output / banner ---- */
+function clearOutput(){document.getElementById('output').innerHTML='<span class="empty">Здесь появится то, что выведет твой код.</span>';}
+function appendOut(t,e){const out=document.getElementById('output');if(out.querySelector('.empty'))out.innerHTML='';
+  const sp=document.createElement('span');if(e)sp.className='err';sp.textContent=t;out.appendChild(sp);}
+function showBanner(ok,text){const b=document.getElementById('banner');b.className='banner '+(ok?'ok':'no');
+  document.getElementById('bannerIc').textContent=ok?'✓':'✗';document.getElementById('bannerText').textContent=text;}
+function hideBanner(){document.getElementById('banner').className='banner';}
+
+/* ---- run ---- */
+function clearCode(){ta.value='';ta.focus();persistCode();}
+async function runCode(){
+  if(!pyodide)return;
+  const btn=document.getElementById('runBtn');btn.disabled=true;btn.textContent='⏳ Выполняю…';
+  hideBanner();document.getElementById('output').innerHTML='';
+  try{
+    await pyodide.runPythonAsync(ta.value);
+    const out=document.getElementById('output');
+    if(out.innerHTML.trim()==='')out.innerHTML='<span class="empty">Код выполнен. Ничего не выведено — добавь print(), чтобы увидеть результат.</span>';
+  }catch(err){const m=err.toString().match(/(\w*Error:[\s\S]*)$/);appendOut('\n'+(m?m[1]:err.toString()).trim(),true);}
+  finally{btn.disabled=false;btn.textContent='▶ Запустить';}
+}
+
+/* ---- check (autograde) ---- */
+async function runForCheck(code,stdin){
+  let buf='';
+  pyodide.setStdout({batched:s=>buf+=s});pyodide.setStderr({batched:s=>buf+=s});
+  window.__testMode=true;window.__testQueue=(stdin||[]).slice();
+  let err=null;
+  try{await pyodide.runPythonAsync(code);}catch(e){err=e.toString();}
+  window.__testMode=false;window.__testQueue=[];
+  pyodide.setStdout({batched:s=>appendOut(s)});pyodide.setStderr({batched:s=>appendOut(s,true)});
+  return {output:buf,error:err};
+}
+async function checkCode(){
+  if(!pyodide)return;
+  const ex=exercises[exIndex];
+  const btn=document.getElementById('checkBtn');btn.disabled=true;btn.textContent='⏳ Проверяю…';
+  document.getElementById('output').innerHTML='';
+  let passed=true,hadErr=false;
+  for(const t of ex.tests){
+    const {output,error}=await runForCheck(ta.value+(ex.harness||''),t.stdin);
+    if(error){passed=false;hadErr=true;appendOut(error.match(/(\w*Error:[\s\S]*)$/)?.[1]||error,true);break;}
+    let ok=false;try{ok=t.ok(output);}catch(e){ok=false;}
+    if(!ok){passed=false;break;}
+  }
+  if(passed){showBanner(true,'Верно! Задание решено. Жми ›, чтобы перейти к следующему.');saveData('done_'+exIndex,true);document.getElementById('doneBadge').classList.remove('hidden');updateProgress();}
+  else if(hadErr)showBanner(false,'В коде ошибка — нажми «Запустить», чтобы увидеть, что именно. Потом проверь снова.');
+  else showBanner(false,ex.fail);
+  // show normal output too (interactive run) so she can see results
+  const out=document.getElementById('output');if(out.innerHTML.trim()==='')clearOutput();
+  btn.disabled=false;btn.textContent='✓ Проверить';
+}
+
+/* ---- init ---- */
+async function init(){
+  try{
+    pyodide=await loadPyodide({indexURL:"https://cdnjs.cloudflare.com/ajax/libs/pyodide/0.28.3/"});
+    pyodide.setStdout({batched:s=>appendOut(s)});
+    pyodide.setStderr({batched:s=>appendOut(s,true)});
+    window.__getInput=function(p){
+      if(window.__testMode)return (window.__testQueue&&window.__testQueue.length)?window.__testQueue.shift():"";
+      const r=window.prompt(p||"input():");return r===null?"":r;
+    };
+    pyodide.runPython(`
+import builtins, js
+def __pp_input(prompt=""):
+    res = js.window.__getInput(prompt if prompt else "")
+    if res is None:
+        res = ""
+    builtins.print(f"{prompt}{res}")
+    return res
+builtins.input = __pp_input
+`);
+    document.getElementById('dot').className='dot ready';
+    document.getElementById('statusText').textContent='Python готов';
+    document.getElementById('runBtn').disabled=false;
+    document.getElementById('checkBtn').disabled=false;
+    document.getElementById('loaderNote').style.display='none';
+  }catch(e){
+    document.getElementById('dot').className='dot';
+    document.getElementById('statusText').textContent='Не загрузился';
+    document.getElementById('loaderNote').innerHTML='Python не загрузился. Проверь интернет и обнови страницу. Если не помогает — открой приложение в Safari или Chrome.';
+  }
+}
+
+(async function(){
+  const le=await loadData('last_ex');if(le!==null&&le>=0&&le<exercises.length)exIndex=le;
+  const s=await loadData('sandbox_code');ta.value=s!==null?s:"print('Привет!')";
+  updateProgress();
+  init();
+})();
+</script>
+</body>
+</html>
