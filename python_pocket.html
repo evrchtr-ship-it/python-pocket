@@ -195,7 +195,7 @@
   <button class="sym key" onclick="insertText('input()',6)">input()</button>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pyodide/0.28.3/pyodide.js"></script>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.28.3/full/pyodide.js"></script>
 <script>
 let pyodide=null, currentTab='sandbox', exIndex=0;
 const ta=document.getElementById('code');
@@ -417,12 +417,12 @@ async function runCode(){
 /* ---- check (autograde) ---- */
 async function runForCheck(code,stdin){
   let buf='';
-  pyodide.setStdout({batched:s=>buf+=s});pyodide.setStderr({batched:s=>buf+=s});
+  pyodide.setStdout({batched:s=>buf+=s+'\n'});pyodide.setStderr({batched:s=>buf+=s+'\n'});
   window.__testMode=true;window.__testQueue=(stdin||[]).slice();
   let err=null;
   try{await pyodide.runPythonAsync(code);}catch(e){err=e.toString();}
   window.__testMode=false;window.__testQueue=[];
-  pyodide.setStdout({batched:s=>appendOut(s)});pyodide.setStderr({batched:s=>appendOut(s,true)});
+  pyodide.setStdout({batched:s=>appendOut(s+'\n')});pyodide.setStderr({batched:s=>appendOut(s+'\n',true)});
   return {output:buf,error:err};
 }
 async function checkCode(){
@@ -448,9 +448,9 @@ async function checkCode(){
 /* ---- init ---- */
 async function init(){
   try{
-    pyodide=await loadPyodide({indexURL:"https://cdnjs.cloudflare.com/ajax/libs/pyodide/0.28.3/"});
-    pyodide.setStdout({batched:s=>appendOut(s)});
-    pyodide.setStderr({batched:s=>appendOut(s,true)});
+    pyodide=await loadPyodide({indexURL:"https://cdn.jsdelivr.net/pyodide/v0.28.3/full/"});
+    pyodide.setStdout({batched:s=>appendOut(s+'\n')});
+    pyodide.setStderr({batched:s=>appendOut(s+'\n',true)});
     window.__getInput=function(p){
       if(window.__testMode)return (window.__testQueue&&window.__testQueue.length)?window.__testQueue.shift():"";
       const r=window.prompt(p||"input():");return r===null?"":r;
